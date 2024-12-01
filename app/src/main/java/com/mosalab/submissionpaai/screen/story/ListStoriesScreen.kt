@@ -2,7 +2,7 @@ package com.mosalab.submissionpaai.screen.story
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -11,13 +11,17 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
-import coil.compose.rememberImagePainter
+import coil.compose.AsyncImage
 import com.mosalab.submissionpaai.PreferencesManager
 import com.mosalab.submissionpaai.api.ApiService
 import com.mosalab.submissionpaai.data.DataStory
@@ -66,8 +70,9 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
         }
     }
 
-    Column(modifier = Modifier.fillMaxSize()) {
-//        LogoutButton(navController = navController)
+    Column(modifier = Modifier
+        .fillMaxSize()
+        .background(Color.White)) {
 
         when {
             isLoading.value -> {
@@ -81,7 +86,7 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                 }
             }
             else -> {
-                LazyColumn {
+                LazyColumn(modifier = modifier.background(Color.White)) {
                     items(stories) { story ->
                         StoryListItem(
                             story = story,
@@ -131,31 +136,45 @@ fun StoryListItem(story: DataStory, onClick: () -> Unit) {
     Card(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(8.dp)
+            .padding(16.dp)
+            .shadow(4.dp, shape = MaterialTheme.shapes.medium)
+            .clip(MaterialTheme.shapes.medium)
+            .background(Color.White)
             .clickable { onClick() }
     ) {
-        Row(modifier = Modifier.padding(16.dp)) {
-            Image(
-                painter = rememberImagePainter(story.photoUri),
-                contentDescription = "Story image",
-                modifier = Modifier
-                    .size(80.dp)
-                    .padding(end = 16.dp),
-                contentScale = ContentScale.Crop
+        AsyncImage(
+            model = story.photoUrl,
+            contentDescription = "Story image",
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(200.dp)
+                .clip(MaterialTheme.shapes.medium),
+            contentScale = ContentScale.Crop
+        )
+
+        Column(
+            modifier = Modifier
+                .padding(16.dp)
+                .fillMaxWidth()
+        ) {
+            Text(
+                text = story.name,
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(bottom = 8.dp)
             )
-            Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = story.name,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = story.description,
-                    style = MaterialTheme.typography.bodyMedium
-                )
-            }
+
+            Text(
+                text = story.description,
+                fontSize = 18.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
+
+
         }
     }
+
 }
 
 @Preview(showBackground = true)
@@ -166,11 +185,12 @@ fun ListStoriesScreenPreview() {
             id = 1.toString(),
             name = "Story 1",
             description = "This is the first story",
-            photoUri = "https://via.placeholder.com/150",
+            photoUrl = "https://via.placeholder.com/150",
             createdAt = "",
             lat = null,
             lon = null
-        ),)
+        ),
+    )
 
     val navController = rememberNavController()
 

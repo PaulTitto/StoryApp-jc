@@ -37,11 +37,12 @@ interface DicodingApiService {
         @Query("location") location: Int = 0
     ): Response<StoriesResponse>
 
-    @GET("/stories/{id}")
+    @GET("/v1/stories/{id}")
     suspend fun getStoryById(
         @Header("Authorization") token: String,
         @Path("id") storyId: String
     ): Response<StoryDetailResponse>
+
 }
 
 object ApiService {
