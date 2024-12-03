@@ -7,6 +7,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -20,6 +22,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import androidx.navigation.Navigator
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.mosalab.submissionpaai.PreferencesManager
@@ -70,44 +73,66 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
         }
     }
 
-    Column(modifier = Modifier
-        .fillMaxSize()
-        .background(Color.White)) {
+    Box {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(Color.White)
+        ) {
 
-        when {
-            isLoading.value -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
+            when {
+                isLoading.value -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 }
-            }
-            isError.value -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Text("Something went wrong. Please try again later.", style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-            else -> {
-                LazyColumn(modifier = modifier.background(Color.White)) {
-                    items(stories) { story ->
-                        StoryListItem(
-                            story = story,
-                            onClick = {
-                                navController.navigate("detail/${story.id}")
-                            }
+
+                isError.value -> {
+                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                        Text(
+                            "Something went wrong. Please try again later.",
+                            style = MaterialTheme.typography.bodyLarge
                         )
                     }
+                }
 
-                    item {
-                        if (!isLoading.value) {
-                            LaunchedEffect(Unit) {
-                                page.value += 1
+                else -> {
+
+                    LazyColumn(modifier = modifier.background(Color.White)) {
+                        items(stories) { story ->
+                            StoryListItem(
+                                story = story,
+                                onClick = {
+                                    navController.navigate("detail/${story.id}")
+                                }
+                            )
+                        }
+
+                        item {
+                            if (!isLoading.value) {
+                                LaunchedEffect(Unit) {
+                                    page.value += 1
+                                }
                             }
                         }
                     }
                 }
             }
         }
+        FloatingActionButton(
+            onClick = {
+                navController.navigate("uploadStory")
+            },
+            modifier = Modifier
+                .align(Alignment.BottomEnd)
+                .padding(bottom = 24.dp, end = 16.dp)
+        ) {
+            Icon(Icons.Filled.Add, contentDescription = "Upload Story")
+        }
     }
+
 }
+
 
 @Composable
 fun LogoutButton(navController: NavController) {
@@ -121,7 +146,9 @@ fun LogoutButton(navController: NavController) {
                 navController.navigate("login")
             }
         },
-        modifier = Modifier.fillMaxWidth().padding(16.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(16.dp)
     ) {
         Text("Logout")
     }

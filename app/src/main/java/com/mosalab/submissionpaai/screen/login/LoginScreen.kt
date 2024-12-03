@@ -117,7 +117,6 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier) {
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .background(Color.White)
             )
         }
 

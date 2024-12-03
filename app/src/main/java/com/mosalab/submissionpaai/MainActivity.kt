@@ -1,16 +1,20 @@
 package com.mosalab.submissionpaai
 
+import android.content.pm.PackageManager
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.enableEdgeToEdge
+import androidx.activity.result.ActivityResultCaller
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,15 +24,37 @@ import com.mosalab.submissionpaai.screen.login.LoginScreen
 import com.mosalab.submissionpaai.screen.login.RegisterScreen
 import com.mosalab.submissionpaai.screen.story.DetailListStoryScreen
 import com.mosalab.submissionpaai.screen.story.ListStoriesScreen
+import com.mosalab.submissionpaai.screen.story.UploadStoryScreen
 import com.mosalab.submissionpaai.ui.theme.SubmissionPAAITheme
 import kotlinx.coroutines.flow.first
 
 class MainActivity : ComponentActivity() {
+
+    private val requestCameraPermissionLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { isGranted ->
+        if (isGranted) {
+            // Permission granted, proceed with camera functionality
+            setupUI()
+        } else {
+            // Permission denied, show a message to the user
+            Toast.makeText(this, "Camera permission is required to use this feature", Toast.LENGTH_LONG).show()
+        }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         PreferencesManager.UserPreferencesDataStore.initialize(applicationContext)
-        enableEdgeToEdge()
 
+        // Check if the app has camera permission
+        if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.CAMERA) != PackageManager.PERMISSION_GRANTED) {
+            // Request permission if not granted
+            requestCameraPermissionLauncher.launch(android.Manifest.permission.CAMERA)
+        } else {
+            // Permission already granted, you can proceed with the camera functionality
+            setupUI()
+        }
+    }
+
+    private fun setupUI() {
         setContent {
             SubmissionPAAITheme {
                 val navController = rememberNavController()
@@ -66,32 +92,35 @@ class MainActivity : ComponentActivity() {
                             val storyId = backStackEntry.arguments?.getString("storyId") ?: ""
                             DetailListStoryScreen(navController, storyId)
                         }
+                        composable("uploadStory") {
+                            UploadStoryScreen(navController)
+                        }
                     }
                 }
             }
         }
     }
-}
 
-@Composable
-fun HandleBackPress(navController: NavController, exitApp: Boolean = false) {
-    BackHandler {
-        if (exitApp) {
-            (navController.context as? ComponentActivity)?.finish()
-        } else {
-            navController.popBackStack()
+    @Composable
+    fun HandleBackPress(navController: NavController, exitApp: Boolean = false) {
+        BackHandler {
+            if (exitApp) {
+                (navController.context as? ComponentActivity)?.finish()
+            } else {
+                navController.popBackStack()
+            }
         }
     }
-}
 
-fun navigateToHome(navController: NavController) {
-    navController.navigate("home") {
-        popUpTo("landing") { inclusive = true }
+    fun navigateToHome(navController: NavController) {
+        navController.navigate("home") {
+            popUpTo("landing") { inclusive = true }
+        }
     }
-}
 
-fun navigateToLanding(navController: NavController) {
-    navController.navigate("landing") {
-        popUpTo("home") { inclusive = true }
+    fun navigateToLanding(navController: NavController) {
+        navController.navigate("landing") {
+            popUpTo("home") { inclusive = true }
+        }
     }
 }

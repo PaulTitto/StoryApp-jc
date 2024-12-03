@@ -26,10 +26,20 @@ data class StoryDetail(
     val lon: Double?
 )
 
-
-
 data class StoriesResponse(
     val error: Boolean,
     val message: String,
     val listStory: List<DataStory>
+)
+
+
+data class AddStoryRequest(
+    val description: String,
+    val photoUrl: String,
+    val lat: Double?,
+    val lon: Double?
+)
+data class AddStoryResponse(
+    val error: Boolean,
+    val message: String
 )
