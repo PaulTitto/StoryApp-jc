@@ -79,7 +79,7 @@ fun UploadStoryScreen(navController: NavController) {
 
     // Upload story logic
     fun uploadStory() {
-        if (imageUri != null && storyText.isNotBlank()) {
+        if (imageUri != null && storyText.isNotBlank() && token.value != null) {
             isLoading = true
 
             // Convert image to MultipartBody.Part
@@ -94,22 +94,21 @@ fun UploadStoryScreen(navController: NavController) {
             // Make the API call in a coroutine
             coroutineScope.launch {
                 try {
-                    val response = token.value?.let {
-                        ApiService.api.uploadStory(
-                            token = it,
-                            description = descriptionRequestBody,
-                            photo = photoPart
-                        )
-                    }
+                    val response = ApiService.api.uploadStory(
+                        token = "Bearer ${token.value!!}",
+                        description = descriptionRequestBody,
+                        photo = photoPart
+                    )
 
                     isLoading = false
-                    if (response != null) {
-                        if (response.isSuccessful) {
-                            uploadResult = response.body()
-                            Log.d("UploadStory", "Success: ${uploadResult?.message}")
-                        } else {
-                            Log.e("UploadStory", "Error: ${response.message()}")
-                        }
+                    if (response.isSuccessful) {
+                        uploadResult = response.body()
+                        Log.d("UploadStory", "Success: ${uploadResult?.message}")
+
+                        // Navigate back to the ListStoriesScreen on successful upload
+                        navController.popBackStack()
+                    } else {
+                        Log.e("UploadStory", "Error: ${response.message()}")
                     }
                 } catch (e: Exception) {
                     isLoading = false
@@ -192,7 +191,6 @@ fun UploadStoryScreen(navController: NavController) {
         }
     }
 }
-
 
 private fun createImageUri(context: android.content.Context): Uri {
     val contentValues = android.content.ContentValues().apply {

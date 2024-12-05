@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val stories = remember { mutableStateListOf<DataStory>() }
+    val stories = remember { mutableStateOf<List<DataStory>>(emptyList()) }
     val isLoading = remember { mutableStateOf(false) }
     val isError = remember { mutableStateOf(false) }
     val token = remember { mutableStateOf<String?>(null) }
@@ -47,14 +47,15 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
 
     LaunchedEffect(token.value) {
         token.value?.let { authToken ->
-            if (stories.isEmpty() && !isLoading.value) {
+            if (stories.value.isEmpty() && !isLoading.value) {
                 isLoading.value = true
                 try {
+                    page.value = 1
                     val response = ApiService.api.getStories("Bearer $authToken", page = page.value, size = 10)
                     if (response.isSuccessful) {
                         val body = response.body()
                         if (body != null && !body.error) {
-                            stories.addAll(body.listStory)
+                            stories.value = body.listStory  // Set stories here
                         } else {
                             isError.value = true
                             showToast(context, "Error: ${body?.message ?: "Unknown error"}")
@@ -73,39 +74,26 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
         }
     }
 
-    Box {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.White)
-        ) {
 
+    Box {
+        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
             when {
                 isLoading.value -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator()
                     }
                 }
-
                 isError.value -> {
                     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text(
-                            "Something went wrong. Please try again later.",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Text("Something went wrong. Please try again later.", style = MaterialTheme.typography.bodyLarge)
                     }
                 }
-
                 else -> {
-
                     LazyColumn(modifier = modifier.background(Color.White)) {
-                        items(stories) { story ->
-                            StoryListItem(
-                                story = story,
-                                onClick = {
-                                    navController.navigate("detail/${story.id}")
-                                }
-                            )
+                        items(stories.value) { story ->
+                            StoryListItem(story = story, onClick = {
+                                navController.navigate("detail/${story.id}")
+                            })
                         }
 
                         item {
@@ -119,20 +107,12 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                 }
             }
         }
-        FloatingActionButton(
-            onClick = {
-                navController.navigate("uploadStory")
-            },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(bottom = 24.dp, end = 16.dp)
-        ) {
+
+        FloatingActionButton(onClick = { navController.navigate("uploadStory") }, modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 24.dp, end = 16.dp)) {
             Icon(Icons.Filled.Add, contentDescription = "Upload Story")
         }
     }
-
 }
-
 
 @Composable
 fun LogoutButton(navController: NavController) {
