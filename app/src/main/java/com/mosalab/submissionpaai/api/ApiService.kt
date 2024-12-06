@@ -1,10 +1,6 @@
 package com.mosalab.submissionpaai.api
 
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.mutableStateOf
-import com.mosalab.submissionpaai.data.AddStoryRequest
 import com.mosalab.submissionpaai.data.AddStoryResponse
-import com.mosalab.submissionpaai.data.DataStory
 import com.mosalab.submissionpaai.data.LoginRequest
 import com.mosalab.submissionpaai.data.LoginResponse
 import com.mosalab.submissionpaai.data.RegisterRequest
@@ -80,9 +76,4 @@ object ApiService {
             .build()
             .create(DicodingApiService::class.java)
     }
-
-    var stories = mutableStateListOf<DataStory>()
-        private set
-
-    var isLoading = mutableStateOf(false)
 }

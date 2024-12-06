@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.BackHandler
 import androidx.activity.compose.setContent
-import androidx.activity.result.ActivityResultCaller
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -19,9 +18,9 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
-import com.mosalab.submissionpaai.screen.login.LandingScreen
+import com.mosalab.submissionpaai.screen.landing.LandingScreen
 import com.mosalab.submissionpaai.screen.login.LoginScreen
-import com.mosalab.submissionpaai.screen.login.RegisterScreen
+import com.mosalab.submissionpaai.screen.register.RegisterScreen
 import com.mosalab.submissionpaai.screen.story.DetailListStoryScreen
 import com.mosalab.submissionpaai.screen.story.ListStoriesScreen
 import com.mosalab.submissionpaai.screen.story.UploadStoryScreen
@@ -112,13 +111,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    fun navigateToHome(navController: NavController) {
+    private fun navigateToHome(navController: NavController) {
         navController.navigate("home") {
             popUpTo("landing") { inclusive = true }
         }
     }
 
-    fun navigateToLanding(navController: NavController) {
+    private fun navigateToLanding(navController: NavController) {
         navController.navigate("landing") {
             popUpTo("home") { inclusive = true }
         }

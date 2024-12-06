@@ -40,7 +40,6 @@ android {
 }
 
 dependencies {
-//    Retrofit for fetch Api
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
@@ -48,7 +47,6 @@ dependencies {
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
 
-//    DataStore
     implementation(libs.androidx.datastore.preferences)
 
     implementation(libs.androidx.core.ktx)

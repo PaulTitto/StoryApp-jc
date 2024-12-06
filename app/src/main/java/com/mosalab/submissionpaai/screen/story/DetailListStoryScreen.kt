@@ -1,12 +1,9 @@
 package com.mosalab.submissionpaai.screen.story
 
-import android.content.Context
-import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
@@ -27,7 +24,6 @@ fun DetailListStoryScreen(
     modifier: Modifier = Modifier
 ) {
     val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
     val isLoading = remember { mutableStateOf(false) }
     val storyDetail = remember { mutableStateOf<StoryDetail?>(null) }
     val isError = remember { mutableStateOf(false) }
@@ -64,7 +60,7 @@ fun DetailListStoryScreen(
             .fillMaxSize()
             .background(Color.White)
             .padding(16.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+//        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         when {
             isLoading.value -> CircularProgressIndicator()
@@ -81,19 +77,20 @@ fun DetailListStoryScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(300.dp),
-                    contentScale = ContentScale.Crop
+                    contentScale = ContentScale.Fit
                 )
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(8.dp))
+
                 Text(
                     text = story.name,
                     fontSize = 24.sp,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
                     text = story.description,
                     fontSize = 16.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { navController.popBackStack() }) {
@@ -105,8 +102,4 @@ fun DetailListStoryScreen(
 }
 
 
-fun showToast(context: Context, message: String, duration: Int = Toast.LENGTH_SHORT) {
-    android.os.Handler(android.os.Looper.getMainLooper()).post {
-        Toast.makeText(context, message, duration).show()
-    }
-}
+

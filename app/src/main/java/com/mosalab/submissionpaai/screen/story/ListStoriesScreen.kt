@@ -4,13 +4,34 @@ import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.filled.MoreVert
+import androidx.compose.material3.Card
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,7 +43,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import androidx.navigation.Navigator
 import androidx.navigation.compose.rememberNavController
 import coil.compose.AsyncImage
 import com.mosalab.submissionpaai.PreferencesManager
@@ -31,6 +51,7 @@ import com.mosalab.submissionpaai.data.DataStory
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
@@ -39,6 +60,7 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
     val isError = remember { mutableStateOf(false) }
     val token = remember { mutableStateOf<String?>(null) }
     val page = remember { mutableStateOf(1) }
+    val isDropdownExpanded = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
@@ -75,64 +97,111 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
     }
 
 
-    Box {
-        Column(modifier = Modifier.fillMaxSize().background(Color.White)) {
-            when {
-                isLoading.value -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                isError.value -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("Something went wrong. Please try again later.", style = MaterialTheme.typography.bodyLarge)
-                    }
-                }
-                else -> {
-                    LazyColumn(modifier = modifier.background(Color.White)) {
-                        items(stories.value) { story ->
-                            StoryListItem(story = story, onClick = {
-                                navController.navigate("detail/${story.id}")
-                            })
-                        }
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Dicoding Stories", color = Color.Black) },
+                actions = {
+                    Box {
+                        Icon(
+                            imageVector = Icons.Default.MoreVert,
+                            contentDescription = "Settings",
+                            modifier = Modifier
+                                .padding(horizontal = 16.dp)
+                                .clickable {
+                                    isDropdownExpanded.value = true
+                                }
 
-                        item {
-                            if (!isLoading.value) {
-                                LaunchedEffect(Unit) {
-                                    page.value += 1
+
+                        )
+                        DropdownMenu(
+                            expanded = isDropdownExpanded.value,
+                            onDismissRequest = { isDropdownExpanded.value = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Settings") },
+                                onClick = {
+                                    isDropdownExpanded.value = false
+                                    // Navigate to settings or handle action
+                                    showToast(context, "Settings clicked")
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Logout") },
+                                onClick = {
+                                    isDropdownExpanded.value = false
+                                    coroutineScope.launch {
+                                        PreferencesManager(context).clearSession()
+                                        navController.navigate("login")
+                                    }
+                                }
+                            )
+                        }
+                    }
+                },
+                colors = TopAppBarDefaults.mediumTopAppBarColors(
+                    containerColor = Color.White
+                )
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton(onClick = { navController.navigate("uploadStory") }) {
+                Icon(Icons.Filled.Add, contentDescription = "Upload Story")
+            }
+        }
+    ) {innerPadding ->
+        Box {
+            Column(modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .background(Color.White)) {
+                when {
+                    isLoading.value -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    isError.value -> {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "Something went wrong. Please try again later.",
+                                style = MaterialTheme.typography.bodyLarge
+                            )
+                        }
+                    }
+
+                    else -> {
+                        LazyColumn(modifier = modifier.background(Color.White)) {
+                            items(stories.value) { story ->
+                                StoryListItem(story = story, onClick = {
+                                    navController.navigate("detail/${story.id}")
+                                })
+                            }
+
+                            item {
+                                if (!isLoading.value) {
+                                    LaunchedEffect(Unit) {
+                                        page.value += 1
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
-        }
 
-        FloatingActionButton(onClick = { navController.navigate("uploadStory") }, modifier = Modifier.align(Alignment.BottomEnd).padding(bottom = 24.dp, end = 16.dp)) {
-            Icon(Icons.Filled.Add, contentDescription = "Upload Story")
+
         }
     }
 }
 
-@Composable
-fun LogoutButton(navController: NavController) {
-    val context = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-
-    Button(
-        onClick = {
-            coroutineScope.launch {
-                PreferencesManager(context).clearSession()
-                navController.navigate("login")
-            }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-    ) {
-        Text("Logout")
-    }
-}
 
 fun showToast(context: Context, message: String) {
     Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
@@ -187,18 +256,6 @@ fun StoryListItem(story: DataStory, onClick: () -> Unit) {
 @Preview(showBackground = true)
 @Composable
 fun ListStoriesScreenPreview() {
-    val mockStories = listOf(
-        DataStory(
-            id = 1.toString(),
-            name = "Story 1",
-            description = "This is the first story",
-            photoUrl = "https://via.placeholder.com/150",
-            createdAt = "",
-            lat = null,
-            lon = null
-        ),
-    )
-
     val navController = rememberNavController()
 
     ListStoriesScreen(navController = navController)

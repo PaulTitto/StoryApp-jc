@@ -1,5 +1,6 @@
 package com.mosalab.submissionpaai.screen.story
 
+import android.Manifest
 import android.app.Activity
 import android.graphics.BitmapFactory
 import android.net.Uri
@@ -9,7 +10,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.OutlinedTextField
@@ -51,13 +51,11 @@ fun UploadStoryScreen(navController: NavController) {
     var isLoading by remember { mutableStateOf(false) }
     var uploadResult by remember { mutableStateOf<AddStoryResponse?>(null) }
 
-    // Get the token using PreferencesManager
     val coroutineScope = rememberCoroutineScope()
     LaunchedEffect(Unit) {
         token.value = PreferencesManager(context).token.firstOrNull()
     }
 
-    // Camera and Gallery Intent Launchers
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && imageUri != null) {
             imageBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
@@ -71,18 +69,15 @@ fun UploadStoryScreen(navController: NavController) {
         }
     }
 
-    // Permission check before launching camera
-    val hasCameraPermission = ContextCompat.checkSelfPermission(context, android.Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    val hasCameraPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
     if (!hasCameraPermission) {
-        ActivityCompat.requestPermissions(context as Activity, arrayOf(android.Manifest.permission.CAMERA), 1)
+        ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), 1)
     }
 
-    // Upload story logic
     fun uploadStory() {
         if (imageUri != null && storyText.isNotBlank() && token.value != null) {
             isLoading = true
 
-            // Convert image to MultipartBody.Part
             val photoFile = uriToFile(imageUri!!, context)
             val photoRequestBody = RequestBody.create("image/*".toMediaTypeOrNull(), photoFile)
             val photoPart = MultipartBody.Part.createFormData("photo", photoFile.name, photoRequestBody)
@@ -91,7 +86,6 @@ fun UploadStoryScreen(navController: NavController) {
                 "text/plain".toMediaTypeOrNull(), storyText
             )
 
-            // Make the API call in a coroutine
             coroutineScope.launch {
                 try {
                     val response = ApiService.api.uploadStory(
@@ -121,11 +115,11 @@ fun UploadStoryScreen(navController: NavController) {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp),
+            .padding(16.dp)
+        ,
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        // Display Image or Placeholder
         imageBitmap?.let {
             Image(
                 bitmap = it.asImageBitmap(),
@@ -136,7 +130,7 @@ fun UploadStoryScreen(navController: NavController) {
             )
         } ?: run {
             Image(
-                painter = painterResource(id = R.drawable.baseline_insert_photo_24), // Placeholder image
+                painter = painterResource(id = R.drawable.baseline_insert_photo_24),
                 contentDescription = "Upload Image",
                 modifier = Modifier
                     .size(150.dp)
@@ -144,17 +138,42 @@ fun UploadStoryScreen(navController: NavController) {
             )
         }
 
-        // TextField for Story input
+        Row {
+            Button(onClick = {
+                if (hasCameraPermission) {
+                    val photoUri = createImageUri(context)
+                    imageUri = photoUri
+                    cameraLauncher.launch(photoUri)
+                } else {
+                    ActivityCompat.requestPermissions(
+                        context as Activity,
+                        arrayOf(Manifest.permission.CAMERA),
+                        1
+                    )
+                }
+            }) {
+                Text("Open Camera")
+            }
+
+            Spacer(Modifier.width(20.dp))
+            Button(onClick = {
+                galleryLauncher.launch("image/*")
+            }) {
+                Text("Open Gallery")
+            }
+        }
+
+        Spacer(Modifier.width(40.dp))
         OutlinedTextField(
             value = storyText,
             onValueChange = { storyText = it },
             label = { Text("Write your story") },
             modifier = Modifier
                 .fillMaxWidth()
+                .height(200.dp)
                 .padding(bottom = 16.dp)
         )
 
-        // Button to upload the story
         Button(
             onClick = { uploadStory() },
             modifier = Modifier
@@ -165,30 +184,11 @@ fun UploadStoryScreen(navController: NavController) {
             Text("Upload Story")
         }
 
-        // Show loading indicator when uploading
         if (isLoading) {
             CircularProgressIndicator()
         }
 
-        // Button to open Camera
-        Button(onClick = {
-            if (hasCameraPermission) {
-                val photoUri = createImageUri(context)  // Create URI for camera storage
-                imageUri = photoUri
-                cameraLauncher.launch(photoUri) // Launch camera
-            } else {
-                ActivityCompat.requestPermissions(context as Activity, arrayOf(android.Manifest.permission.CAMERA), 1)
-            }
-        }) {
-            Text("Open Camera")
-        }
 
-        // Button to open Gallery
-        Button(onClick = {
-            galleryLauncher.launch("image/*")  // Open gallery
-        }) {
-            Text("Open Gallery")
-        }
     }
 }
 
