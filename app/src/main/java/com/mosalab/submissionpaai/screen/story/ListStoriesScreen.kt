@@ -2,6 +2,12 @@ package com.mosalab.submissionpaai.screen.story
 
 import android.content.Context
 import android.widget.Toast
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -29,9 +35,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -132,7 +140,7 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                                     isDropdownExpanded.value = false
                                     coroutineScope.launch {
                                         PreferencesManager(context).clearSession()
-                                        navController.navigate("login")
+                                        navController.navigate("landing")
                                     }
                                 }
                             )
@@ -209,48 +217,55 @@ fun showToast(context: Context, message: String) {
 
 @Composable
 fun StoryListItem(story: DataStory, onClick: () -> Unit) {
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp)
-            .shadow(4.dp, shape = MaterialTheme.shapes.medium)
-            .clip(MaterialTheme.shapes.medium)
-            .background(Color.White)
-            .clickable { onClick() }
+    var clicked by remember { mutableStateOf(false) }
+
+    AnimatedVisibility(
+        visible = !clicked,
+        enter = scaleIn(tween(500)) + fadeIn(tween(500)),
+        exit = scaleOut(tween(500)) + fadeOut(tween(500))
     ) {
-        AsyncImage(
-            model = story.photoUrl,
-            contentDescription = "Story image",
+        Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(200.dp)
-                .clip(MaterialTheme.shapes.medium),
-            contentScale = ContentScale.Crop
-        )
-
-        Column(
-            modifier = Modifier
                 .padding(16.dp)
-                .fillMaxWidth()
+                .shadow(4.dp, shape = MaterialTheme.shapes.medium)
+                .clip(MaterialTheme.shapes.medium)
+                .background(Color.White)
+                .clickable { onClick() }
         ) {
-            Text(
-                text = story.name,
-                fontSize = 20.sp,
-                color = MaterialTheme.colorScheme.onSurface,
-                modifier = Modifier.padding(bottom = 8.dp)
+            AsyncImage(
+                model = story.photoUrl,
+                contentDescription = "Story image",
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .clip(MaterialTheme.shapes.medium),
+                contentScale = ContentScale.Crop
             )
 
-            Text(
-                text = story.description,
-                fontSize = 18.sp,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(bottom = 8.dp)
-            )
+            Column(
+                modifier = Modifier
+                    .padding(16.dp)
+                    .fillMaxWidth()
+            ) {
+                Text(
+                    text = story.name,
+                    fontSize = 20.sp,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
+
+                Text(
+                    text = story.description,
+                    fontSize = 18.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(bottom = 8.dp)
+                )
 
 
+            }
         }
     }
-
 }
 
 @Preview(showBackground = true)

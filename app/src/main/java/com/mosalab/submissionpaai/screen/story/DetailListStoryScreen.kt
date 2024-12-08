@@ -93,9 +93,9 @@ fun DetailListStoryScreen(
                     color = Color.Black
                 )
                 Spacer(modifier = Modifier.height(16.dp))
-                Button(onClick = { navController.popBackStack() }) {
-                    Text("Back to List")
-                }
+//                Button(onClick = { navController.popBackStack() }) {
+//                    Text("Back to List")
+//                }
             }
         }
     }

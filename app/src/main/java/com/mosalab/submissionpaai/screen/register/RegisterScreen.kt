@@ -6,6 +6,10 @@ import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Lock
+import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material.icons.filled.VisibilityOff
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -16,6 +20,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.mosalab.submissionpaai.R
@@ -33,10 +38,9 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
     var password by remember { mutableStateOf("") }
     val context = LocalContext.current
     val isLoading = remember { mutableStateOf(false) }
-
     var isPasswordValid by remember { mutableStateOf(true) }
     var showPasswordErrorToast by remember { mutableStateOf(false) }
-
+    var isPasswordVisible by remember { mutableStateOf(false) } // To toggle password visibility
     Column(
         modifier = modifier
             .padding(16.dp)
@@ -114,6 +118,8 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
             visible = true,
             enter = scaleIn(tween(1000)) + fadeIn(tween(1000))
         ) {
+
+
             OutlinedTextField(
                 value = password,
                 onValueChange = {
@@ -127,19 +133,45 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
                     }
                 },
                 label = { Text("Password") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Lock,
+                        contentDescription = "Password Icon"
+                    )
+                },
+                trailingIcon = {
+                    IconButton(onClick = { isPasswordVisible = !isPasswordVisible }) {
+                        Icon(
+                            imageVector = if (isPasswordVisible) {
+                                Icons.Default.Visibility
+                            } else {
+                                Icons.Default.VisibilityOff
+                            },
+                            contentDescription = if (isPasswordVisible) "Hide Password" else "Show Password"
+                        )
+                    }
+                },
                 keyboardOptions = KeyboardOptions.Default.copy(
                     keyboardType = KeyboardType.Password
                 ),
-                visualTransformation = PasswordVisualTransformation(),
+                visualTransformation = if (isPasswordVisible) {
+                    VisualTransformation.None
+                } else {
+                    PasswordVisualTransformation()
+                },
                 modifier = Modifier.fillMaxWidth(),
-                isError = !isPasswordValid // Show error state if password is invalid
+                isError = !isPasswordValid
             )
 
-            if (showPasswordErrorToast) {
-                Toast.makeText(context, "Password must be more than 8 characters", Toast.LENGTH_SHORT).show()
-                showPasswordErrorToast = false
+            LaunchedEffect(showPasswordErrorToast) {
+                if (showPasswordErrorToast) {
+                    Toast.makeText(context, "Password must be more than 8 characters", Toast.LENGTH_SHORT).show()
+                    showPasswordErrorToast = false
+                }
             }
         }
+
+
 
         Spacer(Modifier.height(16.dp))
 

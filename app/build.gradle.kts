@@ -46,6 +46,9 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 
+    implementation("androidx.compose:compose-bom:2024.01.00")
+
+    implementation("androidx.compose.material:material-icons-extended")
 
     implementation(libs.androidx.datastore.preferences)
 
@@ -58,6 +61,8 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.animation.core.lint)
+    implementation(libs.androidx.espresso.core)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
