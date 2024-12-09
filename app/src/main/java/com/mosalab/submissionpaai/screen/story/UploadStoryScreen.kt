@@ -2,10 +2,13 @@ package com.mosalab.submissionpaai.screen.story
 
 import android.Manifest
 import android.app.Activity
+import android.content.ContentValues
+import android.content.Context
 import android.graphics.BitmapFactory
 import android.net.Uri
 import android.os.Environment
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
@@ -20,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.mosalab.submissionpaai.PreferencesManager
@@ -36,8 +38,8 @@ import java.io.File
 import java.io.FileOutputStream
 import java.io.IOException
 import java.io.InputStream
-
 import android.content.pm.PackageManager
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 
@@ -52,83 +54,100 @@ fun UploadStoryScreen(navController: NavController) {
     var uploadResult by remember { mutableStateOf<AddStoryResponse?>(null) }
 
     val coroutineScope = rememberCoroutineScope()
+
     LaunchedEffect(Unit) {
         token.value = PreferencesManager(context).token.firstOrNull()
+    }
+
+    val hasCameraPermission = ContextCompat.checkSelfPermission(
+        context, Manifest.permission.CAMERA
+    ) == PackageManager.PERMISSION_GRANTED
+    if (!hasCameraPermission) {
+        ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), 1)
     }
 
     val cameraLauncher = rememberLauncherForActivityResult(ActivityResultContracts.TakePicture()) { success ->
         if (success && imageUri != null) {
             imageBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(imageUri!!))
+        } else {
+            imageUri = null
+            imageBitmap = null
+            Toast.makeText(context, "Image capture was cancelled or failed.", Toast.LENGTH_SHORT).show()
         }
     }
 
     val galleryLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
-        uri?.let {
-            imageUri = it
-            imageBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(it))
+        if (uri != null) {
+            imageUri = uri
+            imageBitmap = BitmapFactory.decodeStream(context.contentResolver.openInputStream(uri))
+        } else {
+            imageBitmap = null
+            Toast.makeText(context, "Image selection was cancelled.", Toast.LENGTH_SHORT).show()
         }
     }
 
-    val hasCameraPermission = ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
-    if (!hasCameraPermission) {
-        ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), 1)
-    }
-
     fun uploadStory() {
-        if (imageUri != null && storyText.isNotBlank() && token.value != null) {
-            isLoading = true
+        if (storyText.isNotBlank()) {
+            if (imageUri != null) {
+                isLoading = true
 
-            val photoFile = uriToFile(imageUri!!, context)
-            val photoRequestBody = RequestBody.create("image/*".toMediaTypeOrNull(), photoFile)
-            val photoPart = MultipartBody.Part.createFormData("photo", photoFile.name, photoRequestBody)
-
-            val descriptionRequestBody = RequestBody.create(
-                "text/plain".toMediaTypeOrNull(), storyText
-            )
-
-            coroutineScope.launch {
-                try {
-                    val response = ApiService.api.uploadStory(
-                        token = "Bearer ${token.value!!}",
-                        description = descriptionRequestBody,
-                        photo = photoPart
-                    )
-
-                    isLoading = false
-                    if (response.isSuccessful) {
-                        uploadResult = response.body()
-                        Log.d("UploadStory", "Success: ${uploadResult?.message}")
-
-                        // Navigate back to the ListStoriesScreen on successful upload
-                        navController.popBackStack()
-                    } else {
-                        Log.e("UploadStory", "Error: ${response.message()}")
-                    }
-                } catch (e: Exception) {
-                    isLoading = false
-                    Log.e("UploadStory", "Failure: ${e.message}")
+                if (imageUri == null) {
+                    Toast.makeText(context, "No image selected", Toast.LENGTH_SHORT).show()
+                    return
                 }
+
+                val photoFile = uriToFile(imageUri!!, context)
+
+                val photoRequestBody = RequestBody.create("image/*".toMediaTypeOrNull(), photoFile)
+                val photoPart = MultipartBody.Part.createFormData("photo", photoFile.name, photoRequestBody)
+
+                val descriptionRequestBody = RequestBody.create("text/plain".toMediaTypeOrNull(), storyText)
+
+                coroutineScope.launch {
+                    try {
+                        val response = ApiService.api.uploadStory(
+                            token = "Bearer ${token.value!!}",
+                            description = descriptionRequestBody,
+                            photo = photoPart
+                        )
+
+                        isLoading = false
+                        if (response.isSuccessful) {
+                            uploadResult = response.body()
+                            Log.d("UploadStory", "Success: ${uploadResult?.message}")
+                            navController.popBackStack()
+                        } else {
+                            Log.e("UploadStory", "Error: ${response.message()}")
+                        }
+                    } catch (e: Exception) {
+                        isLoading = false
+                        Log.e("UploadStory", "Failure: ${e.message}")
+                    }
+                }
+            } else {
+                Toast.makeText(context, "Please add a photo to your story.", Toast.LENGTH_SHORT).show()
             }
+        } else {
+            Toast.makeText(context, "Please write something before uploading.", Toast.LENGTH_SHORT).show()
         }
     }
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .padding(16.dp)
-        ,
+            .padding(16.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
     ) {
-        imageBitmap?.let {
+        if (imageBitmap != null) {
             Image(
-                bitmap = it.asImageBitmap(),
+                bitmap = imageBitmap!!.asImageBitmap(),
                 contentDescription = "Uploaded Image",
                 modifier = Modifier
                     .size(150.dp)
                     .padding(bottom = 16.dp)
             )
-        } ?: run {
+        } else {
             Image(
                 painter = painterResource(id = R.drawable.baseline_insert_photo_24),
                 contentDescription = "Upload Image",
@@ -145,17 +164,14 @@ fun UploadStoryScreen(navController: NavController) {
                     imageUri = photoUri
                     cameraLauncher.launch(photoUri)
                 } else {
-                    ActivityCompat.requestPermissions(
-                        context as Activity,
-                        arrayOf(Manifest.permission.CAMERA),
-                        1
-                    )
+                    ActivityCompat.requestPermissions(context as Activity, arrayOf(Manifest.permission.CAMERA), 1)
                 }
             }) {
                 Text("Open Camera")
             }
 
             Spacer(Modifier.width(20.dp))
+
             Button(onClick = {
                 galleryLauncher.launch("image/*")
             }) {
@@ -164,6 +180,7 @@ fun UploadStoryScreen(navController: NavController) {
         }
 
         Spacer(Modifier.width(40.dp))
+
         OutlinedTextField(
             value = storyText,
             onValueChange = { storyText = it },
@@ -184,16 +201,15 @@ fun UploadStoryScreen(navController: NavController) {
             Text("Upload Story")
         }
 
+        // Loading Indicator
         if (isLoading) {
             CircularProgressIndicator()
         }
-
-
     }
 }
 
-private fun createImageUri(context: android.content.Context): Uri {
-    val contentValues = android.content.ContentValues().apply {
+private fun createImageUri(context: Context): Uri {
+    val contentValues = ContentValues().apply {
         put(android.provider.MediaStore.Images.Media.TITLE, "New Story Image")
         put(android.provider.MediaStore.Images.Media.DESCRIPTION, "Story Image")
     }
@@ -202,7 +218,7 @@ private fun createImageUri(context: android.content.Context): Uri {
     ) ?: throw Exception("Unable to create image URI")
 }
 
-private fun uriToFile(uri: Uri, context: android.content.Context): File {
+private fun uriToFile(uri: Uri, context: Context): File {
     val inputStream: InputStream? = context.contentResolver.openInputStream(uri)
     val file = File(context.getExternalFilesDir(Environment.DIRECTORY_PICTURES), "uploaded_image.jpg")
     try {

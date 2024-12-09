@@ -132,7 +132,7 @@ fun LoginScreen(navController: NavController, modifier: Modifier = Modifier) {
             value = password.value,
             onValueChange = {
                 password.value = it
-                if (it.length <= 8) {
+                if (it.length < 8) {
                     isPasswordValid = false
                     showPasswordErrorToast = true
                 } else {

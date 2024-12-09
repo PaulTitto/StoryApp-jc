@@ -124,7 +124,7 @@ fun RegisterScreen(navController: NavController, modifier: Modifier = Modifier) 
                 value = password,
                 onValueChange = {
                     password = it
-                    if (it.length <= 8) {
+                    if (it.length < 8) {
                         isPasswordValid = false
                         showPasswordErrorToast = true
                     } else {
