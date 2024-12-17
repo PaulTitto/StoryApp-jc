@@ -1,5 +1,6 @@
 package com.mosalab.submissionpaai.screen.story
 
+import StoryViewModelFactory
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.animation.AnimatedVisibility
@@ -52,10 +53,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import androidx.navigation.compose.rememberNavController
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.mosalab.submissionpaai.PreferencesManager
 import com.mosalab.submissionpaai.api.ApiService
 import com.mosalab.submissionpaai.data.DataStory
+import com.mosalab.submissionpaai.viewmodel.StoryViewModel
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
@@ -63,47 +67,22 @@ import kotlinx.coroutines.launch
 @Composable
 fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifier) {
     val context = LocalContext.current
-    val stories = remember { mutableStateOf<List<DataStory>>(emptyList()) }
-    val isLoading = remember { mutableStateOf(false) }
-    val isError = remember { mutableStateOf(false) }
-    val token = remember { mutableStateOf<String?>(null) }
-    val page = remember { mutableStateOf(1) }
-    val isDropdownExpanded = remember { mutableStateOf(false) }
     val coroutineScope = rememberCoroutineScope()
+    val isDropdownExpanded = remember { mutableStateOf(false) }
 
+    // Ambil token dari PreferencesManager
+    val token = remember { mutableStateOf<String?>(null) }
     LaunchedEffect(Unit) {
         token.value = PreferencesManager(context).token.firstOrNull()
     }
 
-    LaunchedEffect(token.value) {
-        token.value?.let { authToken ->
-            if (stories.value.isEmpty() && !isLoading.value) {
-                isLoading.value = true
-                try {
-                    page.value = 1
-                    val response = ApiService.api.getStories("Bearer $authToken", page = page.value, size = 10)
-                    if (response.isSuccessful) {
-                        val body = response.body()
-                        if (body != null && !body.error) {
-                            stories.value = body.listStory  // Set stories here
-                        } else {
-                            isError.value = true
-                            showToast(context, "Error: ${body?.message ?: "Unknown error"}")
-                        }
-                    } else {
-                        isError.value = true
-                        showToast(context, "Error: ${response.message()}")
-                    }
-                } catch (e: Exception) {
-                    isError.value = true
-                    showToast(context, "Error fetching stories: ${e.message}")
-                } finally {
-                    isLoading.value = false
-                }
-            }
-        }
-    }
+    // Deklarasi ViewModel
+    val viewModel: StoryViewModel = token.value?.let {
+        androidx.lifecycle.viewmodel.compose.viewModel(factory = StoryViewModelFactory(it))
+    } ?: return
 
+    // Paging data
+    val stories = viewModel.storyPagingData.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
@@ -119,8 +98,6 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                                 .clickable {
                                     isDropdownExpanded.value = true
                                 }
-
-
                         )
                         DropdownMenu(
                             expanded = isDropdownExpanded.value,
@@ -130,7 +107,6 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                                 text = { Text("Settings") },
                                 onClick = {
                                     isDropdownExpanded.value = false
-                                    // Navigate to settings or handle action
                                     showToast(context, "Settings clicked")
                                 }
                             )
@@ -157,55 +133,32 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
                 Icon(Icons.Filled.Add, contentDescription = "Upload Story")
             }
         }
-    ) {innerPadding ->
-        Box {
-            Column(modifier = Modifier
+    ) { innerPadding ->
+        Box(
+            modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(Color.White)) {
-                when {
-                    isLoading.value -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    isError.value -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            Text(
-                                "Something went wrong. Please try again later.",
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                    else -> {
-                        LazyColumn(modifier = modifier.background(Color.White)) {
-                            items(stories.value) { story ->
-                                StoryListItem(story = story, onClick = {
-                                    navController.navigate("detail/${story.id}")
-                                })
-                            }
-
-                            item {
-                                if (!isLoading.value) {
-                                    LaunchedEffect(Unit) {
-                                        page.value += 1
-                                    }
-                                }
+                .background(Color.White)
+        ) {
+            if (stories.itemCount == 0) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            } else {
+                LazyColumn {
+                    items(stories.itemCount) { index ->
+                        val story = stories[index]
+                        if (story != null) {
+                            StoryListItem(story = story) {
+                                navController.navigate("detail/${story.id}")
                             }
                         }
                     }
                 }
             }
-
-
         }
     }
 }
