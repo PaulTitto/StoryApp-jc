@@ -43,6 +43,13 @@ dependencies {
     implementation(libs.retrofit)
     implementation(libs.converter.gson)
     implementation(libs.okhttp)
+    implementation("com.google.maps.android:maps-compose:6.2.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.6.0")
+
+//    Maps
+    implementation("com.google.maps.android:maps-compose:2.13.0")
+    implementation("com.google.android.gms:play-services-maps:18.1.0")
+
     implementation("io.coil-kt:coil-compose:2.2.2")
     implementation("com.squareup.okhttp3:logging-interceptor:4.10.0")
 

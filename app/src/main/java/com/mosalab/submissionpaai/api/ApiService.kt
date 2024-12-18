@@ -28,6 +28,9 @@ interface DicodingApiService {
     @POST("/v1/login")
     fun login(@Body request: LoginRequest): Call<LoginResponse>
 
+
+
+
     @POST("/v1/register")
     fun register(@Body request: RegisterRequest): Call<RegisterResponse>
 
@@ -38,6 +41,16 @@ interface DicodingApiService {
         @Query("size") size: Int? = null,
         @Query("location") location: Int = 0
     ): Response<StoriesResponse>
+
+
+    @GET("/v1/stories")
+    suspend fun getStoriesWithLocation(
+        @Header("Authorization") token: String,
+        @Query("location") location: Int = 1
+    ): Response<StoriesResponse>
+
+
+
 
     @GET("/v1/stories/{id}")
     suspend fun getStoryById(

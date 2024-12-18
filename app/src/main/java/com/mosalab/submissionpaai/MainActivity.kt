@@ -18,6 +18,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import com.mosalab.submissionpaai.Maps.MapsScreen
 import com.mosalab.submissionpaai.screen.landing.LandingScreen
 import com.mosalab.submissionpaai.screen.login.LoginScreen
 import com.mosalab.submissionpaai.screen.register.RegisterScreen
@@ -93,6 +94,10 @@ class MainActivity : ComponentActivity() {
                         }
                         composable("uploadStory") {
                             UploadStoryScreen(navController)
+                        }
+
+                        composable("maps") {
+                            MapsScreen(navController)
                         }
                     }
                 }

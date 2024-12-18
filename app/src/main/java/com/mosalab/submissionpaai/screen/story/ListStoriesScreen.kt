@@ -13,6 +13,7 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,6 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Map
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -84,42 +86,56 @@ fun ListStoriesScreen(navController: NavController, modifier: Modifier = Modifie
     // Paging data
     val stories = viewModel.storyPagingData.collectAsLazyPagingItems()
 
+
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text("Dicoding Stories", color = Color.Black) },
                 actions = {
                     Box {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Settings",
-                            modifier = Modifier
-                                .padding(horizontal = 16.dp)
-                                .clickable {
-                                    isDropdownExpanded.value = true
-                                }
-                        )
-                        DropdownMenu(
-                            expanded = isDropdownExpanded.value,
-                            onDismissRequest = { isDropdownExpanded.value = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Settings") },
-                                onClick = {
-                                    isDropdownExpanded.value = false
-                                    showToast(context, "Settings clicked")
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Logout") },
-                                onClick = {
-                                    isDropdownExpanded.value = false
-                                    coroutineScope.launch {
-                                        PreferencesManager(context).clearSession()
-                                        navController.navigate("landing")
+
+                        Row {
+                            Icon(
+                                imageVector = Icons.Default.Map,
+                                contentDescription = "Maps",
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .clickable {
+                                        navController.navigate("maps")
                                     }
-                                }
+
                             )
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Settings",
+                                modifier = Modifier
+                                    .padding(horizontal = 16.dp)
+                                    .clickable {
+                                        isDropdownExpanded.value = true
+                                    }
+                            )
+                            DropdownMenu(
+                                expanded = isDropdownExpanded.value,
+                                onDismissRequest = { isDropdownExpanded.value = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Settings") },
+                                    onClick = {
+                                        isDropdownExpanded.value = false
+                                        showToast(context, "Settings clicked")
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Logout") },
+                                    onClick = {
+                                        isDropdownExpanded.value = false
+                                        coroutineScope.launch {
+                                            PreferencesManager(context).clearSession()
+                                            navController.navigate("landing")
+                                        }
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -210,6 +226,7 @@ fun StoryListItem(story: DataStory, onClick: () -> Unit) {
 
                 Text(
                     text = story.description,
+                    maxLines = 3,
                     fontSize = 18.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 8.dp)
