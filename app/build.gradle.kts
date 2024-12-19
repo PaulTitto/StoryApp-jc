@@ -40,12 +40,22 @@ android {
 }
 
 dependencies {
+    testImplementation("androidx.paging:paging-testing:3.1.1")
+    androidTestImplementation("androidx.test.ext:junit:1.1.5")
+    androidTestImplementation("androidx.test:core:1.5.0")
+    testImplementation("org.robolectric:robolectric:4.10.3")
+
+    testImplementation("androidx.paging:paging-testing:3.1.1")
+    testImplementation("app.cash.turbine:turbine:0.12.1")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")
+
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.1")
     testImplementation("org.mockito:mockito-core:4.8.0")
     testImplementation("org.mockito.kotlin:mockito-kotlin:4.0.0")
     testImplementation("junit:junit:4.13.2")
     testImplementation("app.cash.turbine:turbine:0.12.1")
-
+    testImplementation("org.jetbrains.kotlin:kotlin-test:1.7.20")
+    testImplementation("androidx.paging:paging-testing:3.1.1")
 
     implementation(libs.retrofit)
     implementation(libs.converter.gson)

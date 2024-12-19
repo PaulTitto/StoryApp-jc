@@ -1,30 +1,28 @@
 package com.mosalab.submissionpaai.viewmodel
 
 import androidx.paging.PagingData
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
-import app.cash.turbine.test
-import com.mosalab.submissionpaai.api.DicodingApiService
+import androidx.recyclerview.widget.ListUpdateCallback
 import com.mosalab.submissionpaai.data.DataStory
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNotNull
 import org.junit.Before
 import org.junit.Test
-import org.mockito.Mock
-import org.mockito.Mockito
+import org.junit.runner.RunWith
 import org.mockito.MockitoAnnotations
+import org.robolectric.RobolectricTestRunner
+import org.robolectric.annotation.Config
 
+@RunWith(RobolectricTestRunner::class)
+@Config(manifest = Config.NONE)
 @OptIn(ExperimentalCoroutinesApi::class)
 class StoryViewModelTest {
-
-    @Mock
-    private lateinit var apiService: DicodingApiService
 
     private lateinit var viewModel: StoryViewModel
 
@@ -35,37 +33,65 @@ class StoryViewModelTest {
     fun setup() {
         MockitoAnnotations.openMocks(this)
         Dispatchers.setMain(testDispatcher)
+        viewModel = StoryViewModel("dummy_token")
     }
 
     @Test
     fun `verify storyPagingData emits correct paging data`() = testScope.runTest {
-        // Mock PagingSource
         val dummyStories = listOf(
             DataStory("1", "Story 1", "Description 1", "url1", "2022-12-01", null, null),
             DataStory("2", "Story 2", "Description 2", "url2", "2022-12-02", null, null)
         )
-        val fakePagingSource = object : PagingSource<Int, DataStory>() {
-            override suspend fun load(params: LoadParams<Int>): LoadResult<Int, DataStory> {
-                return LoadResult.Page(
-                    data = dummyStories,
-                    prevKey = null,
-                    nextKey = null
-                )
-            }
+        val pagingData = PagingData.from(dummyStories)
+        val pagingFlow = flowOf(pagingData)
 
-            override fun getRefreshKey(state: PagingState<Int, DataStory>): Int? = null
+        // Collect PagingData into a snapshot using PagingDataDiffer
+        val differ = collectPagingData(pagingFlow)
+
+        // Assert items in snapshot
+        assertNotNull(differ)
+        assertEquals(2, differ.size)
+        assertEquals(dummyStories[0], differ[0])
+    }
+
+    @Test
+    fun `when there are no story data, ensure the number of items is zero`() = testScope.runTest {
+        val emptyStories = listOf<DataStory>()
+        val pagingData = PagingData.from(emptyStories)
+        val pagingFlow = flowOf(pagingData)
+
+        // Collect PagingData into a snapshot using PagingDataDiffer
+        val differ = collectPagingData(pagingFlow)
+
+        // Assert items in snapshot
+        assertNotNull(differ)
+        assertEquals(0, differ.size)
+    }
+
+    /**
+     * Helper function to collect PagingData into a snapshot using PagingDataDiffer
+     */
+    private suspend fun collectPagingData(pagingFlow: kotlinx.coroutines.flow.Flow<PagingData<DataStory>>): List<DataStory> {
+        val differ = androidx.paging.AsyncPagingDataDiffer(
+            diffCallback = object : androidx.recyclerview.widget.DiffUtil.ItemCallback<DataStory>() {
+                override fun areItemsTheSame(oldItem: DataStory, newItem: DataStory): Boolean = oldItem.id == newItem.id
+                override fun areContentsTheSame(oldItem: DataStory, newItem: DataStory): Boolean = oldItem == newItem
+            },
+            updateCallback = object : ListUpdateCallback {
+                override fun onInserted(position: Int, count: Int) {}
+                override fun onRemoved(position: Int, count: Int) {}
+                override fun onMoved(fromPosition: Int, toPosition: Int) {}
+                override fun onChanged(position: Int, count: Int, payload: Any?) {}
+            },
+            mainDispatcher = Dispatchers.Main,
+            workerDispatcher = Dispatchers.IO
+        )
+
+        pagingFlow.collect { pagingData ->
+            differ.submitData(pagingData)
         }
 
-        // Mock ViewModel's paging data to use the fake paging source
-        viewModel = StoryViewModel("dummy_token")
-
-        val pagingDataFlow = flowOf(PagingData.from(dummyStories))
-
-        // Verify data
-        pagingDataFlow.test {
-            val item = awaitItem()
-            assert(item != null)
-            cancelAndIgnoreRemainingEvents()
-        }
+        // Return the snapshot of the collected items
+        return differ.snapshot().items
     }
 }
