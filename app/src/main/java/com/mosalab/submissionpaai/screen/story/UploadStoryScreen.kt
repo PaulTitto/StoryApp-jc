@@ -42,6 +42,8 @@ import android.content.pm.PackageManager
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import okhttp3.RequestBody.Companion.asRequestBody
+import okhttp3.RequestBody.Companion.toRequestBody
 
 @Composable
 fun UploadStoryScreen(navController: NavController) {
@@ -98,10 +100,11 @@ fun UploadStoryScreen(navController: NavController) {
 
                 val photoFile = uriToFile(imageUri!!, context)
 
-                val photoRequestBody = RequestBody.create("image/*".toMediaTypeOrNull(), photoFile)
+                val photoRequestBody = photoFile.asRequestBody("image/*".toMediaTypeOrNull())
                 val photoPart = MultipartBody.Part.createFormData("photo", photoFile.name, photoRequestBody)
 
-                val descriptionRequestBody = RequestBody.create("text/plain".toMediaTypeOrNull(), storyText)
+                val descriptionRequestBody =
+                    storyText.toRequestBody("text/plain".toMediaTypeOrNull())
 
                 coroutineScope.launch {
                     try {
