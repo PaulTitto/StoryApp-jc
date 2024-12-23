@@ -41,6 +41,25 @@ android {
 }
 
 dependencies {
+
+    // Paging dependencies
+    implementation("androidx.paging:paging-runtime-ktx:3.1.1")
+    testImplementation("androidx.paging:paging-common-ktx:3.1.1")
+
+// MockK for mocking
+    testImplementation("io.mockk:mockk:1.12.5")
+
+// JUnit for unit testing
+    testImplementation("junit:junit:4.13.2")
+
+// Coroutines testing
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+
+// Arch Core testing
+    testImplementation("androidx.arch.core:core-testing:2.1.0")
+
+    testImplementation("androidx.paging:paging-common-ktx:3.2.0")
+    testImplementation("org.slf4j:slf4j-simple:1.7.36")
     testImplementation("androidx.paging:paging-testing:3.1.1")
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.5")

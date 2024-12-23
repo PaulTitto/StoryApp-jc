@@ -1,26 +1,27 @@
-import androidx.paging.PagingData
-import androidx.paging.testing.asSnapshot
-import com.mosalab.submissionpaai.api.ApiService
+import androidx.arch.core.executor.testing.InstantTaskExecutorRule
+import androidx.paging.PagingSource
 import com.mosalab.submissionpaai.api.DicodingApiService
 import com.mosalab.submissionpaai.data.DataStory
 import com.mosalab.submissionpaai.data.StoriesResponse
-import com.mosalab.submissionpaai.viewmodel.StoryViewModel
-import com.mosalab.submissionpaai.data.StoryPagingSource
 import io.mockk.coEvery
-import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.*
+import org.junit.Rule
 import org.junit.Test
 import retrofit2.Response
 
-@OptIn(ExperimentalCoroutinesApi::class)
+@ExperimentalCoroutinesApi
 class StoryViewModelTest {
 
-    private val fakeToken = "fakeToken"
-    private val mockApiService = mockk<ApiService>()
+    @get:Rule
+    val instantExecutorRule = InstantTaskExecutorRule()
+
+    private val fakeToken = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJ1c2VyLVhJU0gyZE1OSElUb0pkLWYiLCJpYXQiOjE3MzQ5NjM3NjZ9.GCsu9ef9vUQZqys5Sx7NlPHN-9NnYouacQOS9sTxI88"
+    private val mockApiService = mockk<DicodingApiService>()
+    private val testDispatcher = StandardTestDispatcher()
 
     private val mockStories = listOf(
         DataStory(
@@ -52,78 +53,79 @@ class StoryViewModelTest {
         )
     )
 
+    private val mockResponse = StoriesResponse(
+        listStory = mockStories,
+        error = false,
+        message = "Success"
+    )
 
     @Test
-    fun `test successful story loading - data is not null`() = runTest {
-        val storiesResponse = StoriesResponse(
-            listStory = mockStories,
-            error = false,
-            message = ""
+    fun `test successful story loading - data is not null`() = runTest(testDispatcher) {
+        // Mock API response
+        coEvery {
+            mockApiService.getStories(
+                token = eq("Bearer $fakeToken"),
+                page = eq(1),
+                size = eq(10),
+                location = eq(0)
+            )
+        } returns Response.success(mockResponse)
+
+        // Test PagingSource
+        val pagingSource = StoryPagingSource(mockApiService, fakeToken)
+        val loadResult = pagingSource.load(
+            PagingSource.LoadParams.Refresh(
+                key = 1, // Ensure this matches the expected page
+                loadSize = 10,
+                placeholdersEnabled = false
+            )
         )
+        println("LoadResult: $loadResult") // Debugging
 
-        coEvery { mockApiService.api.getStories("Bearer $fakeToken", any(), any(), any()) } returns Response.success(storiesResponse)
-
-        val storyPagingSource = StoryPagingSource(mockApiService, fakeToken)
-        val viewModel = StoryViewModel(fakeToken)
-
-        val snapshot = viewModel.storyPagingData.asSnapshot()
-        assertNotNull(snapshot)
+        // Assertions
+        assertTrue(loadResult is PagingSource.LoadResult.Page)
+        val page = loadResult as PagingSource.LoadResult.Page
+        assertNotNull(page.data)
+        assertEquals(mockStories.size, page.data.size)
+        assertEquals(mockStories[0], page.data[0])
     }
 
     @Test
-    fun `test no data returns empty list`() = runTest {
-        val storiesResponse = StoriesResponse(
-            listStory = emptyList(),
-            error = false,
-            message = ""
+    fun `test no data returns empty list`() = runTest(testDispatcher) {
+//        val correctToken =
+
+        // Correctly mock the API response with matching parameters
+        coEvery {
+            mockApiService.getStories(
+                token = eq("Bearer $fakeToken"),
+                page = eq(1),
+                size = eq(10),
+                location = eq(0)
+            )
+        } returns Response.success(
+            StoriesResponse(
+                listStory = emptyList(),
+                error = false,
+                message = "Success"
+            )
         )
 
-        coEvery { mockApiService.api.getStories("Bearer $fakeToken", any(), any(), any()) } returns Response.success(storiesResponse)
+        // Test PagingSource
+        val pagingSource = StoryPagingSource(mockApiService, fakeToken)
+        val loadResult = pagingSource.load(
+            PagingSource.LoadParams.Refresh(
+                key = 1,
+                loadSize = 10,
+                placeholdersEnabled = false
+            )
+        )
 
-        val storyPagingSource = StoryPagingSource(mockApiService, fakeToken)
-        val viewModel = StoryViewModel(fakeToken)
+        println("LoadResult: $loadResult") // Debugging
 
-        val snapshot = viewModel.storyPagingData.asSnapshot()
-        assertTrue(snapshot.isEmpty())
+        // Assertions
+        assertTrue(loadResult is PagingSource.LoadResult.Page)
+        val page = loadResult as PagingSource.LoadResult.Page
+        assertTrue(page.data.isEmpty())
     }
-
-
-
-//    ERROR
-//    @Test
-//    fun `test story count matches`() = runTest {
-//        val precomputedPagingData = PagingData.from(mockStories)
-//
-//        // Fetch snapshot using TestDispatcher (inherent in runTest)
-//        val snapshot = precomputedPagingData.asSnapshot(this)
-//        assertEquals(3, snapshot.size)
-//    }
-
-
-    //    ERROR
-//    @Test
-//    fun `test first story matches`() = runTest {
-//        // Pre-compute PagingData
-//        val precomputedPagingData = PagingData.from(mockStories)
-//
-//        // Mock storyPagingData Flow
-//        val viewModel = mockk<StoryViewModel> {
-//            every { storyPagingData } returns flowOf(precomputedPagingData)
-//        }
-//
-//        // Fetch snapshot from PagingData
-//        val snapshot = precomputedPagingData.asSnapshot()
-//
-//        // Assert the snapshot is not empty
-//        assertTrue("Paging data snapshot should not be empty", snapshot.isNotEmpty())
-//
-//        // Assert the first story matches
-//        assertEquals("Story 1", snapshot.first().name)
-//    }
-
-
-
-
-
 
 }

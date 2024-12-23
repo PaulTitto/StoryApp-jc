@@ -4,11 +4,24 @@ data class DataStory(
     val id: String,
     val name: String,
     val description: String,
-    val photoUrl:  String,
+    val photoUrl: String,
     val createdAt: String,
-    val lat: Double?,
-    val lon: Double?
-)
+    val lat: Double,
+    val lon: Double
+) {
+    companion object {
+        val DIFF_CALLBACK = object : androidx.recyclerview.widget.DiffUtil.ItemCallback<DataStory>() {
+            override fun areItemsTheSame(oldItem: DataStory, newItem: DataStory): Boolean {
+                return oldItem.id == newItem.id
+            }
+
+            override fun areContentsTheSame(oldItem: DataStory, newItem: DataStory): Boolean {
+                return oldItem == newItem
+            }
+        }
+    }
+}
+
 
 data class StoryDetailResponse(
     val error: Boolean,
