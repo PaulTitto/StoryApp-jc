@@ -71,18 +71,16 @@ class StoryViewModelTest {
             )
         } returns Response.success(mockResponse)
 
-        // Test PagingSource
         val pagingSource = StoryPagingSource(mockApiService, fakeToken)
         val loadResult = pagingSource.load(
             PagingSource.LoadParams.Refresh(
-                key = 1, // Ensure this matches the expected page
+                key = 1,
                 loadSize = 10,
                 placeholdersEnabled = false
             )
         )
         println("LoadResult: $loadResult") // Debugging
 
-        // Assertions
         assertTrue(loadResult is PagingSource.LoadResult.Page)
         val page = loadResult as PagingSource.LoadResult.Page
         assertNotNull(page.data)
@@ -92,9 +90,7 @@ class StoryViewModelTest {
 
     @Test
     fun `test no data returns empty list`() = runTest(testDispatcher) {
-//        val correctToken =
 
-        // Correctly mock the API response with matching parameters
         coEvery {
             mockApiService.getStories(
                 token = eq("Bearer $fakeToken"),

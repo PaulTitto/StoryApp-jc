@@ -41,7 +41,7 @@ android {
 }
 
 dependencies {
-
+    implementation("org.slf4j:slf4j-nop:2.0.7")
     // Paging dependencies
     implementation("androidx.paging:paging-runtime-ktx:3.1.1")
     testImplementation("androidx.paging:paging-common-ktx:3.1.1")
